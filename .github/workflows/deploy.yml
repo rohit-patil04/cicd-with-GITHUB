@@ -24,8 +24,20 @@ jobs:
         run: |
           aws s3 sync . s3://${{ secrets.S3_BUCKET }} --delete
 
+      # ✅ NEW STEP (IMPORTANT): Check if CloudFront ID exists
+      - name: Verify CloudFront Distribution ID
+        run: |
+          if [ -z "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
+            echo "❌ ERROR: CLOUDFRONT_DISTRIBUTION_ID secret is missing"
+            exit 1
+          else
+            echo "✅ CloudFront Distribution ID found"
+          fi
+
+      # ✅ UPDATED INVALIDATION STEP
       - name: Invalidate CloudFront Cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" \
             --paths "/*"
+
